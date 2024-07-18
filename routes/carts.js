@@ -3,127 +3,126 @@ import fs from 'fs';
 import path from 'path';
 
 const router = express.Router();
-const cartsFilePath = path.resolve('data/carts.json');
+const productsFilePath = path.resolve('data/products.json');
 
-// Función para leer los carritos desde el archivo JSON
-function readCartsFromFile() {
+function readProductsFromFile() {
   try {
-    const cartsData = fs.readFileSync(cartsFilePath, 'utf8');
-    return JSON.parse(cartsData);
+    const productsData = fs.readFileSync(productsFilePath, 'utf8');
+    return JSON.parse(productsData);
   } catch (error) {
-    console.error('Error al leer el archivo de carritos:', error);
-    return {};
+    console.error('Error al leer el archivo de productos:', error);
+    return [];
   }
 }
 
-let carts = readCartsFromFile();
+let products = readProductsFromFile();
 
-router.get('/', (req, res) => {
-  res.json(Object.values(carts));
-});
+export default (io) => {
+  router.get('/', (req, res) => {
+    let { limit = 10, page = 1, sort, query } = req.query;
+    limit = parseInt(limit);
+    page = parseInt(page);
 
-router.get('/:cid', (req, res) => {
-  const cartId = req.params.cid;
-  const cart = carts[cartId];
-  if (cart) {
-    res.json(cart);
-  } else {
-    res.status(404).send('Carrito no encontrado');
-  }
-});
+    let filteredProducts = products;
 
-router.post('/:cid', (req, res) => {
-  const cartId = req.params.cid;
-  const newProducts = req.body;
-
-  if (!Array.isArray(newProducts)) {
-    return res.status(400).send('Se esperaba un arreglo de productos');
-  }
-
-  carts[cartId] = newProducts;
-
-  try {
-    fs.writeFileSync(cartsFilePath, JSON.stringify(carts, null, 2));
-    res.status(201).json(newProducts);
-  } catch (error) {
-    console.error('Error al escribir en el archivo de carritos:', error);
-    res.status(500).send('Error interno del servidor al guardar el carrito');
-  }
-});
-
-router.put('/:cid/products/:pid', (req, res) => {
-  const cartId = req.params.cid;
-  const productId = req.params.pid;
-  const { quantity } = req.body;
-
-  if (!quantity || typeof quantity !== 'number') {
-    return res.status(400).send('La cantidad debe ser un número válido');
-  }
-
-  if (!carts[cartId]) {
-    carts[cartId] = [];
-  }
-
-  const cart = carts[cartId];
-  const existingProduct = cart.find(item => item.id === productId);
-
-  if (existingProduct) {
-    existingProduct.quantity = quantity;
-  } else {
-    cart.push({ id: productId, quantity });
-  }
-
-  try {
-    fs.writeFileSync(cartsFilePath, JSON.stringify(carts, null, 2));
-    res.json(cart);
-  } catch (error) {
-    console.error('Error al escribir en el archivo de carritos:', error);
-    res.status(500).send('Error interno del servidor al actualizar el carrito');
-  }
-});
-
-router.delete('/:cid/products/:pid', (req, res) => {
-  const cartId = req.params.cid;
-  const productId = req.params.pid;
-
-  if (!carts[cartId]) {
-    return res.status(404).send('Carrito no encontrado');
-  }
-
-  const cart = carts[cartId];
-  const index = cart.findIndex(item => item.id === productId);
-
-  if (index !== -1) {
-    cart.splice(index, 1);
-
-    try {
-      fs.writeFileSync(cartsFilePath, JSON.stringify(carts, null, 2));
-      res.status(204).send();
-    } catch (error) {
-      console.error('Error al escribir en el archivo de carritos:', error);
-      res.status(500).send('Error interno del servidor al eliminar el producto del carrito');
+    if (query) {
+      filteredProducts = filteredProducts.filter(product =>
+        product.title.includes(query) || product.category.includes(query)
+      );
     }
-  } else {
-    res.status(404).send('Producto no encontrado en el carrito');
-  }
-});
 
-router.delete('/:cid', (req, res) => {
-  const cartId = req.params.cid;
+    if (sort) {
+      if (sort === 'asc') {
+        filteredProducts.sort((a, b) => a.price - b.price);
+      } else if (sort === 'desc') {
+        filteredProducts.sort((a, b) => b.price - a.price);
+      }
+    }
 
-  if (!carts[cartId]) {
-    return res.status(404).send('Carrito no encontrado');
-  }
+    const totalProducts = filteredProducts.length;
+    const totalPages = Math.ceil(totalProducts / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
 
-  delete carts[cartId];
+    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-  try {
-    fs.writeFileSync(cartsFilePath, JSON.stringify(carts, null, 2));
+    res.json({
+      status: 'success',
+      payload: paginatedProducts,
+      totalPages,
+      prevPage: page > 1 ? page - 1 : null,
+      nextPage: page < totalPages ? page + 1 : null,
+      page,
+      hasPrevPage: page > 1,
+      hasNextPage: page < totalPages,
+      prevLink: page > 1 ? `/api/products?limit=${limit}&page=${page - 1}&sort=${sort}&query=${query}` : null,
+      nextLink: page < totalPages ? `/api/products?limit=${limit}&page=${page + 1}&sort=${sort}&query=${query}` : null
+    });
+  });
+
+  router.get('/:pid', (req, res) => {
+    const productId = parseInt(req.params.pid);
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      res.json(product);
+    } else {
+      res.status(404).send('Producto no encontrado');
+    }
+  });
+
+  router.post('/', (req, res) => {
+    const { title, description, code, price, stock, category, thumbnails = [] } = req.body;
+
+    if (!title || !description || !code || !price || !stock || !category) {
+      return res.status(400).send('Todos los campos son obligatorios, excepto thumbnails');
+    }
+
+    const newProduct = {
+      id: products.length ? Math.max(...products.map(p => p.id)) + 1 : 1,
+      title,
+      description,
+      code,
+      price,
+      status: true,
+      stock,
+      category,
+      thumbnails
+    };
+
+    products.push(newProduct);
+    writeProductsToFile(products);
+    io.emit('updateProducts', products);
+    res.status(201).json(newProduct);
+  });
+
+  router.put('/:pid', (req, res) => {
+    const productId = parseInt(req.params.pid);
+    const { title, description, code, price, status, stock, category, thumbnails = [] } = req.body;
+    const productIndex = products.findIndex(p => p.id === productId);
+
+    if (productIndex === -1) {
+      return res.status(404).send('Producto no encontrado');
+    }
+
+    products[productIndex] = { id: productId, title, description, code, price, status, stock, category, thumbnails };
+    writeProductsToFile(products);
+    io.emit('updateProducts', products);
+    res.json(products[productIndex]);
+  });
+
+  router.delete('/:pid', (req, res) => {
+    const productId = parseInt(req.params.pid);
+    const productIndex = products.findIndex(p => p.id === productId);
+
+    if (productIndex === -1) {
+      return res.status(404).send('Producto no encontrado');
+    }
+
+    products.splice(productIndex, 1);
+    writeProductsToFile(products);
+    io.emit('updateProducts', products);
     res.status(204).send();
-  } catch (error) {
-    console.error('Error al escribir en el archivo de carritos:', error);
-    res.status(500).send('Error interno del servidor al eliminar el carrito');
-  }
-});
-
-export default router;
+  });
+      
+  return router;
+};

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My App</title>
+    <!-- Aquí puedes incluir tus estilos CSS o enlaces a CDN -->
+</head>
+<body>
+    {{{body}}}
+    <!-- Aquí se inyectará el contenido de la vista específica -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+        socket.on('updateProducts', function(products) {
+            // Aquí puedes actualizar dinámicamente la lista de productos en la página
+            console.log('Productos actualizados:', products);
+        });
+    </script>
+</body>
+</html>
