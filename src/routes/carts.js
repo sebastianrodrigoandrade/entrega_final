@@ -4,32 +4,38 @@ import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';  // Asegúrate de importar el modelo Product
 
 const createCartsRouter = (io) => {
-const router = express.Router();
+  const router = express.Router();
 
   // Configuración de la sesión
-router.use(session({
-  secret: 'tu_secreto',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false } // Cambia a true si usas HTTPS
-}));
+  router.use(session({
+    secret: 'tu_secreto',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Cambia a true si usas HTTPS
+  }));
 
-router.post('/add', (req, res) => {
-  const { productId, productTitle, productPrice } = req.body;
+  // Ruta para agregar un producto al carrito
+  router.post('/:cid/products', async (req, res) => {
+    const { cid } = req.params;
+    const { productId } = req.body;
 
-  if (!req.session.cart) {
-    req.session.cart = [];
-  }
+    try {
+      const cart = await Cart.findById(cid);
+      if (!cart) return res.status(404).json({ status: 'error', message: 'Cart not found' });
 
-  const existingProductIndex = req.session.cart.findIndex(product => product.id === productId);
-  if (existingProductIndex !== -1) {
-    req.session.cart[existingProductIndex].quantity += 1;
-  } else {
-    req.session.cart.push({ id: productId, title: productTitle, price: productPrice, quantity: 1 });
-  }
+      const productIndex = cart.products.findIndex(p => p.product.toString() === productId);
+      if (productIndex === -1) {
+        cart.products.push({ product: productId, quantity: 1 });
+      } else {
+        cart.products[productIndex].quantity += 1;
+      }
 
-  res.redirect('/cart');
-});
+      await cart.save();
+      res.json({ status: 'success', payload: cart });
+    } catch (error) {
+      res.status(500).json({ status: 'error', message: error.message });
+    }
+  });
 
 // Ruta para mostrar el contenido del carrito
 router.get('/', (req, res) => {

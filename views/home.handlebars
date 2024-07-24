@@ -19,31 +19,24 @@
         {{/each}}
     </ul>
     <script>
-        document.querySelectorAll('.add-to-cart').forEach(button => {
-            button.addEventListener('click', async (event) => {
-                const productId = event.target.getAttribute('data-product-id');
-                const cartId = 'ID_DEL_CARRITO'; // Reemplaza esto con el ID del carrito del usuario
+    document.addEventListener('DOMContentLoaded', () => {
+        const addButtons = document.querySelectorAll('.add-to-cart');
 
-                try {
-                    const response = await fetch(`/api/carts/${cartId}/products`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ productId, quantity: 1 }) // Ajusta la cantidad según sea necesario
-                    });
+        addButtons.forEach(button => {
+        button.addEventListener('click', async (event) => {
+            const productId = event.target.dataset.productId;
 
-                    if (response.ok) {
-                        console.log('Producto agregado al carrito');
-                        // Actualiza la UI si es necesario
-                    } else {
-                        console.error('Error al agregar el producto al carrito');
-                    }
-                } catch (error) {
-                    console.error('Error en la solicitud:', error);
-                }
+            // Enviar solicitud para agregar el producto al carrito
+            await fetch(`/api/carts/${productId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
             });
+
+            // Redirigir a la página del carrito
+            window.location.href = '/cart';
         });
+        });
+    });
     </script>
 </body>
 </html>

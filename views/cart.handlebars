@@ -1,22 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrito</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrito de Compras</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <h1>Carrito</h1>
-    {{#if cart.length}}
-      <ul>
-        {{#each cart}}
-          <li>{{title}} - ${{price}} - Cantidad: {{quantity}}</li>
+  <h1>Carrito de Compras</h1>
+  {{#if products.length}}
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each products}}
+          <tr>
+            <td>{{this.product.title}}</td>
+            <td>{{this.quantity}}</td>
+            <td>${{this.product.price}}</td>
+            <td>${{this.quantity.product.price}}</td>
+          </tr>
         {{/each}}
-      </ul>
-      <a href="/">Seguir comprando</a>
-    {{else}}
-      <p>El carrito está vacío</p>
-      <a href="/">Seguir comprando</a>
-    {{/if}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Total</td>
+          <td>${{total}}</td>
+        </tr>
+      </tfoot>
+    </table>
+  {{else}}
+    <p>Tu carrito está vacío.</p>
+  {{/if}}
+  <a href="/">Volver a la tienda</a>
 </body>
 </html>
