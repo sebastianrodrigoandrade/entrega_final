@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentación</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .endpoint {
+      margin-bottom: 20px;
+    }
+    .method {
+      font-weight: bold;
+    }
+    pre {
+      background-color: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Documentación</h1>
+
+  <div class="endpoint">
+    <h2>Productos</h2>
+    <div>
+      <span class="method">GET</span> /api/products<br>
+      <span>Parámetros: limit, page, sort, query</span>
+    </div>
+    <div>
+      <span class="method">POST</span> /api/products<br>
+      <span>Body: Array de productos</span>
+    </div>
+    <div>
+      <span class="method">PUT</span> /api/products/:id<br>
+      <span>Body: Producto actualizado</span>
+    </div>
+    <div>
+      <span class="method">DELETE</span> /api/products/:id
+    </div>
+  </div>
+
+  <div class="endpoint">
+    <h2>Carritos</h2>
+    <div>
+      <span class="method">POST</span> /api/carts/:cid/products<br>
+      <span>Body: productId, quantity</span>
+    </div>
+    <div>
+      <span class="method">DELETE</span> /api/carts/:cid/products/:pid
+    </div>
+    <div>
+      <span class="method">PUT</span> /api/carts/:cid<br>
+      <span>Body: Array de productos</span>
+    </div>
+    <div>
+      <span class="method">PUT</span> /api/carts/:cid/products/:pid<br>
+      <span>Body: quantity</span>
+    </div>
+    <div>
+      <span class="method">DELETE</span> /api/carts/:cid
+    </div>
+    <div>
+      <span class="method">GET</span> /api/carts/:cid
+    </div>
+  </div>
+</body>
+</html>

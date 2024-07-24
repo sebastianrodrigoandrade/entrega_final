@@ -1,43 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Productos</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos</title>
 </head>
 <body>
-  <h1>Lista de Productos</h1>
-  <ul>
-    {{#each products}}
-      <li>
-        <h2>{{this.title}}</h2>
-        <p>{{this.description}}</p>
-        <p>Precio: ${{this.price}}</p>
-        <p>Categoría: {{this.category}}</p>
-        <a href="/products/{{this.id}}">Ver detalles</a>
-        <button onclick="addToCart({{this.id}})">Agregar al carrito</button>
-      </li>
-    {{/each}}
-  </ul>
-  <div>
-    {{#if hasPrevPage}}
-      <a href="{{prevLink}}">Anterior</a>
-    {{/if}}
-    {{#if hasNextPage}}
-      <a href="{{nextLink}}">Siguiente</a>
-    {{/if}}
-  </div>
-  <script>
-    function addToCart(productId) {
-      fetch('/api/carts/:cid/products/' + productId, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ quantity: 1 })
-      })
-      .then(response => response.json())
-      .then(data => console.log(data))
-      .catch(error => console.error('Error:', error));
-    }
-  </script>
+    <h1>Productos</h1>
+    <ul>
+        {{#each products}}
+            <li>
+                <h2>{{title}}</h2>
+                <p>Precio: ${{price}}</p>
+                <p>Stock: {{stock}}</p>
+                <p>Categoría: {{category}}</p>
+                <button class="add-to-cart" data-product-id="{{_id}}">Agregar al carrito</button>
+            </li>
+        {{/each}}
+    </ul>
+    <script>
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', async (event) => {
+                const productId = event.target.getAttribute('data-product-id');
+                const cartId = 'ID_DEL_CARRITO'; // Reemplaza esto con el ID del carrito del usuario
+
+                try {
+                    const response = await fetch(`/api/carts/${cartId}/products`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ productId, quantity: 1 }) // Ajusta la cantidad según sea necesario
+                    });
+
+                    if (response.ok) {
+                        console.log('Producto agregado al carrito');
+                        // Actualiza la UI si es necesario
+                    } else {
+                        console.error('Error al agregar el producto al carrito');
+                    }
+                } catch (error) {
+                    console.error('Error en la solicitud:', error);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
